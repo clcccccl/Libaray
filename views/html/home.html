@@ -1,0 +1,362 @@
+<html>
+<head>
+  <title>图书馆</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/dashboard.css" rel="stylesheet">
+  <script src="http://127.0.0.1:8000/views/tools/bootstrap/js/jquery.min.js"></script>
+  <script>
+    var pass = false;
+    var username = "null";
+    var account = "null";
+    var usertype = 11;
+    var id = 0;z
+    function search(){
+      var searchText = document.getElementById('searchText').value;
+      $.post(
+              "http://127.0.0.1:8000/searchbooks/",
+              {
+                text:searchText
+              },
+              function(data){
+                var data = data;
+                var st = "";
+                for (var i=0;i<data.length;i++)
+                {
+                  st = st+'<div class="col-xs-6 col-sm-3 thumbnail" onclick="oneBook('+data[i].id+')" style="background-color: rgba(0,0, 0, 0.1)">'+
+                  '<img src="'+data[i].image_url+'" style="max-height: 200px;max-width: 100%;display: block">'+
+                  '<h5>'+data[i].name+'</h5></div>'
+                }
+                $("#showBooks").html(st)
+              },
+              'json'
+      );
+    }
+    function selfhome(){
+      if(usertype==1){
+        window.location.href="http://127.0.0.1:8000/teacher/?account="+account+"&id="+id;
+      }else{
+        window.location.href="http://127.0.0.1:8000/student/?account="+account+"&id="+id;
+      }
+    }
+    function login(){
+      var loginaccount = document.getElementById('account').value;
+      var loginpassword = document.getElementById('password').value;
+      $.post(
+              "http://127.0.0.1:8000/login/",
+              {
+                account:loginaccount,
+                password:loginpassword
+              },
+              function(data){
+                var data = data;
+                if(data[0].type==11){
+                  $("#error").html("账号或者密码错误！")
+                }else {
+                  pass = true;
+                  $('#myModal').modal('hide');
+                  username = data[0].name;
+                  account = data[0].account;
+                  password = data[0].password;
+                  id = data[0].id;
+                  usertype = data[0].type;
+                  if(data[0].type==2){
+                    window.location.href="http://127.0.0.1:8000/manage/?account="+account+"&id="+id;
+                  }
+                  else{
+                    $("#lili").remove();
+                    $("#wer").append(
+                            '<li id="lili">'+
+                            '<button type="button" onclick="selfhome()" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa">'+
+                            username+
+                            '</button>'+
+                            '</li>')
+                  }
+                }
+              },
+              'json'
+      );
+    }
+    function clickMenu(date){
+      $.post(
+              "http://127.0.0.1:8000/getbooks/",
+              {
+                type:date.id
+              },
+              function(data){
+                var data = data;
+                var st = "";
+                for (var i=0;i<data.length;i++)
+                {
+                  st = st+'<div class="col-xs-6 col-sm-3 thumbnail" onclick="oneBook('+data[i].id+')" style="background-color: rgba(0,0, 0, 0.1)">'+
+                  '<img src="'+data[i].image_url+'" style="max-height: 200px;max-width: 100%;display: block">'+
+                  '<h5>'+data[i].name+'</h5></div>'
+                }
+                $("#showBooks").html(st)
+              },
+              'json'
+      );
+    }
+  </script>
+</head>
+<body>
+<div class="modal fade" id="showOneBook" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"
+     style="background-color: rgba(0,0, 0, 0.8)">
+  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" >
+    <h3 class="page-header">书籍</h3>
+    <div id="showOneBookAll" class="container-fluid">
+      <div class="row">
+        <div id="showOneBookImage" class="col-md-4">
+        </div>
+        <div id="showOneBookBook" class="col-md-8" style="color: #FFFFFF">
+        </div>
+      </div>
+    </div>
+    <div id="oneBookAllComment" style="color: #FFFFFF"></div>
+  </div>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
+  <form class="form-horizontal" style="padding-bottom: 10%;padding-top:10%;padding-right: 10%;padding-left:55%; background-color: rgba(8,8,8,0.5)">
+    <div class="form-group">
+      <label for="account" class="col-sm-2 control-label" style="color: #FFFFFF">账号</label>
+      <div class="col-sm-10">
+        <input class="form-control" id="account">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="password" class="col-sm-2 control-label" style="color: #FFFFFF">密码</label>
+      <div class="col-sm-10">
+        <input type="password" class="form-control" id="password">
+      </div>
+    </div>
+    <div class="form-group" id="clclc">
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="button" class="btn btn-default" onclick="login()">登录</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <label id="error" class="col-sm-10 control-label" style="color: #FFFFFF"></label>
+      </div>
+    </div>
+  </form>
+</div>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-5">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="http://127.0.0.1:8000/home/">图书馆</a>
+        </div>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <form class="col-md-4 navbar-form">
+          <input type="text" id="searchText" class="form-control">
+        </form>
+        <div class="col-md-2 nav">
+          <img onclick="search()" src="http://127.0.0.1:8000/views/images/search.png" style="margin-top: 15px; max-height: 20px;max-width: 20px;display: block">
+        </div>
+        <ul class="col-md-1 nav navbar-nav">
+          <li id="wer"></li>
+          <li id="lili">
+            <button type="button" id="loginButton" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa" data-toggle="modal" data-target="#myModal">
+              登录
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="container-fluid" style="background:url(http://127.0.0.1:8000/views/images/beijing.jpg) 0 0 repeat">
+  <div class="row">
+    <div class="col-sm-3 col-md-2 sidebar" style="background-color:rgba(8,8,8,0.5)">
+      <ul class="nav nav-sidebar">
+        <li><a id="1" onclick="clickMenu(this)" style="color:#FFFFFF">哲学</a></li>
+        <li><a id="2" onclick="clickMenu(this)" style="color:#FFFFFF">马列主义</a></li>
+        <li><a id="3" onclick="clickMenu(this)" style="color:#FFFFFF">社会科学</a></li>
+        <li><a id="4" onclick="clickMenu(this)" style="color:#FFFFFF">政治法律</a></li>
+        <li><a id="5" onclick="clickMenu(this)" style="color:#FFFFFF">军事</a></li>
+        <li><a id="6" onclick="clickMenu(this)" style="color:#FFFFFF">经济</a></li>
+        <li><a id="7" onclick="clickMenu(this)" style="color:#FFFFFF">文化科学教育体育</a></li>
+        <li><a id="8" onclick="clickMenu(this)" style="color:#FFFFFF">语言文字</a></li>
+        <li><a id="9" onclick="clickMenu(this)" style="color:#FFFFFF">文学</a></li>
+        <li><a id="10" onclick="clickMenu(this)" style="color:#FFFFFF">艺术</a></li>
+        <li><a id="11" onclick="clickMenu(this)" style="color:#FFFFFF">历史地理</a></li>
+        <li><a id="12" onclick="clickMenu(this)" style="color:#FFFFFF">自然科学</a></li>
+        <li><a id="13" onclick="clickMenu(this)" style="color:#FFFFFF">数理化</a></li>
+        <li><a id="14" onclick="clickMenu(this)" style="color:#FFFFFF">天文地球学</a></li>
+        <li><a id="15" onclick="clickMenu(this)" style="color:#FFFFFF">生物科学</a></li>
+        <li><a id="16" onclick="clickMenu(this)" style="color:#FFFFFF">医药卫生</a></li>
+        <li><a id="17" onclick="clickMenu(this)" style="color:#FFFFFF">农林科学</a></li>
+        <li><a id="18" onclick="clickMenu(this)" style="color:#FFFFFF">工业技术</a></li>
+        <li><a id="19" onclick="clickMenu(this)" style="color:#FFFFFF">交通运输</a></li>
+        <li><a id="20" onclick="clickMenu(this)" style="color:#FFFFFF">航空航天</a></li>
+        <li><a id="21" onclick="clickMenu(this)" style="color:#FFFFFF">安全科学</a></li>
+        <li><a id="22" onclick="clickMenu(this)" style="color:#FFFFFF">综合性图书</a></li>
+      </ul>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" >
+      <h3 class="page-header">书馆推荐</h3>
+      <div id="showBooks" class="row placeholders" style="padding-bottom: 100%">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/jquery.min.js"></script>
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/bootstrap.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/holder.js"></script>
+<script>
+  var book_id = 0;
+  function showComment(){
+    $.post(
+            "http://127.0.0.1:8000/showcomment/",
+            {
+              bookId:book_id
+            },
+            function(data){
+              var data = data;
+              var st = "";
+              for (var i=0;i<data.length;i++){
+                st = st +'<div class="container-fluid">'+
+                         '<div class="row">'+
+                         '<div class="col-md-3">'+
+                         '<p>'+data[i].username+'</p></div><div class="col-md-9">'+
+                         '<p>'+data[i].text+'</p></div></div></div>'
+              }
+              $('#oneBookAllComment').html('' +
+                      '<h3 class="sub-header" id="oneBookComment">评论</h3>'+st+
+              '')
+            },
+            'json'
+    )
+  }
+  function submitComment(){
+    var myDate = new Date();
+    var date = myDate.getFullYear()+'-'+(myDate.getMonth()+1)+'-'+myDate.getDate()+
+            ' '+myDate.getHours()+':'+myDate.getMinutes()+
+            ':'+myDate.getSeconds();
+    var commentText = document.getElementById('oneBookWriteCommentText').value;
+    $.post(
+            "http://127.0.0.1:8000/commentbook/",
+            {
+              date:date,
+              username:username,
+              bookId:book_id,
+              commentText:commentText
+            },
+            function(data){
+              $('#oneBookWriteCommentH').remove();
+              $('#oneBookWriteComment').remove();
+            },
+            'json'
+    )
+    showComment()
+  }
+  function commentOneBook(){
+    if(pass){
+      $('#showOneBookAll').append('' +
+      '<h3 class="sub-header" id="oneBookWriteCommentH">评价书籍</h3>'+
+      '<div id="oneBookWriteComment" class="container-fluid">'+
+      '<div class="row">'+
+      '<div id="showOneBookUserName" class="col-md-10">'+
+      '<textarea rows="3" class="col-md-offset-2 col-md-8" id="oneBookWriteCommentText"></textarea>'+
+      '<button type="button" onclick="submitComment()" class="btn btn-lg" style="margin-top: 20px; background-color: rgba(8,8,8,0);color: dimgray">提交</button>'+
+      '</div>'+
+      '</div>'+
+      '</div>'+
+      '')
+    }else {
+      alert("登录后才能进行评论！");
+    }
+  }
+  function startBorrowBook(){
+    if(pass){
+      var myDate = new Date();
+      var date = myDate.getFullYear()+'-'+(myDate.getMonth()+1)+'-'+myDate.getDate()+
+              ' '+myDate.getHours()+':'+myDate.getMinutes()+
+              ':'+myDate.getSeconds();
+      $.post(
+              "http://127.0.0.1:8000/startborrowbook/",
+              {
+                userId:id,
+                bookId:book_id,
+                date:date
+              },
+              function(data){
+                var data = data;
+                if(data[0].type==0){
+                  alert("借书单已提交！随机码为："+data[0].code);
+                }else if(data[0].type==1){
+                  alert("该书库存不足！");
+                }else{
+                  alert("该书不存在或已下架！");
+                }
+              },
+              'json'
+      )
+    }else{
+      alert("登录后才能借书！");
+    }
+  }
+  function oneBook(onebookid){
+    $('#showOneBook').modal('show');
+    var oneid = onebookid;
+    $.post(
+            "http://127.0.0.1:8000/getonebook/",
+            {
+              id:oneid
+            },
+            function(data){
+              var data = data;
+              book_id = data[0].id;
+              $("#showOneBookImage").html('' +
+                       '<img src="'+data[0].image_url+'" style="max-height: 200px;max-width: 100%;display: block">'+
+              '')
+              $("#showOneBookBook").html('' +
+                      '<p>书名：'+data[0].name+'</p>'+
+                      '<p>作者：'+data[0].author+'</p>'+
+                      '<p>版本：'+data[0].version+'</p>'+
+                      '<p>库存量：'+data[0].stock+'</p>'+
+                      '<p>位置：'+data[0].address+'</p>'+
+                      '<p>简介：'+data[0].description+'</p>'+
+                      '<button type="button" onclick="startBorrowBook()" class="btn btn-lg" style="margin-top: 20px; background-color: rgba(8,8,8,0);color: dimgray">借书</button>'+
+                      '<button type="button" onclick="commentOneBook()" class="btn btn-lg" style="margin-top: 20px; background-color: rgba(8,8,8,0);color: dimgray">评论</button>'+
+              '')
+              $("#showOneBookId").hide();
+              showComment();
+            },
+            'json'
+    );
+  }
+  $.post(
+          "http://127.0.0.1:8000/getbooks/",
+          {
+            type:"first",
+            last:8,
+            first:0
+          },
+          function(data){
+            var data = data;
+            var st = "";
+            for (var i=0;i<data.length;i++)
+            {
+              st = st+'<div class="col-xs-6 col-sm-3 thumbnail" onclick="oneBook('+data[i].id+')" style="background-color: rgba(0,0, 0, 0.1)">'+
+                      '<img src="'+data[i].image_url+'" style="max-height: 200px;max-width: 100%;display: block">'+
+            '<h5>'+data[i].name+'</h5></div>'
+            }
+            $("#showBooks").html(st)
+          },
+          'json'
+  );
+
+</script>
+</body></html>

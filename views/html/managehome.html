@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<!-- saved from url=(0041)http://v3.bootcss.com/examples/dashboard/ -->
+<html lang="zh-CN"><head>
+    <title>图书馆</title>
+    <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/dashboard.css" rel="stylesheet">
+    <script>
+        var account = "{{ account }}"
+        var id = "{{ id }}"
+        var name = "{{ name }}"
+        var type = "{{ type }}"
+        var borrow_id=0;
+        var isbn = "";
+        function submitChangePassword(){
+            var newPassword = document.getElementById('newPassword').value;
+            var newPasswordAaain = document.getElementById('newPasswordAgain').value;
+            if(newPassword == newPasswordAaain){
+                $.post(
+                        "http://127.0.0.1:8000/changepassword/",
+                        {
+                            user_id: id,
+                            new_password:newPassword
+                        },
+                        function(data){
+                            var data = data;
+                            if(data.type==0){
+                                alert("密码修改成功！");
+                            }else{
+                                alert("用户不存在或者数据异常，密码修改失败！");
+                            }
+                        },
+                        'json'
+                )
+            }else{
+                alert("两次输入不一致！");
+            }
+        }
+        function submitReturn(){
+            $.post(
+                    "http://127.0.0.1:8000/submitreturn/",
+                    {
+                        isbn: isbn
+                    },
+                    function(data){
+                    },
+                    'json'
+            )
+        }
+        function addpay(){
+            var myDate = new Date();
+            var date = myDate.getFullYear()+'-'+(myDate.getMonth()+1)+'-'+myDate.getDate()+
+                            ' '+myDate.getHours()+':'+myDate.getMinutes()+
+                            ':'+myDate.getSeconds();
+            var payname = document.getElementById('addpayname').value;
+            var paynumber = document.getElementById('addpaynumber').value;
+            $.post(
+                    "http://127.0.0.1:8000/addpay/",
+                    {
+                        payname:payname,
+                        paynumber:paynumber,
+                        date:date
+                    },
+                    function(data){
+                        $.post(
+                                "http://127.0.0.1:8000/showpay/",
+                                {},
+                                function(data){
+                                    var data = data;
+                                    var st="";
+                                    for (var i=0;i<data.length;i++)
+                                    {
+                                        st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                        '<td>'+data[i].duration+'</td> <td>'+data[i].update+'</td>'+
+                                        '</tr>'
+                                    }
+                                    $("#new").html("");
+                                    $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 32%;padding-left: 10%;padding-right: 15%">'+
+                                    '<table class="table">'+
+                                    '<thead>'+
+                                    '<tr>'+
+                                    '<th>id</th>'+
+                                    '<th>付款类型</th>'+
+                                    '<th>价格：角/天</th>'+
+                                    '<th>更新时间</th>'+
+                                    '</tr>'+
+                                    '</thead>'+
+                                    '<tbody>'+st+'</tbody> </table> </div>');
+                                },
+                                'json'
+                        )
+                    },
+                    'json'
+            )
+        }
+        function downBook(){
+            var isbn = document.getElementById('downBookIsbn').value;
+            $.post(
+                    "http://127.0.0.1:8000/downbook/",
+                    {
+                        isbn:isbn
+                    },
+                    function(data){
+                        var data = data;
+                        if(data.type==0){
+                            alert("书籍已下架！");
+                        }else{
+                            alert("书籍下架失败，可能该书已被借出！");
+                        }
+                    },
+                    'json'
+            )
+        }
+        function adduser(){
+            var username = document.getElementById('addusername').value;
+            var account = document.getElementById('adduseraccount').value;
+            var password = document.getElementById('adduserpassword').value;
+            var type = document.getElementById('addusertype').value;
+            var userclass = document.getElementById('adduserclass').value;
+            $.post(
+                    "http://127.0.0.1:8000/adduser/",
+                    {
+                        username:username,
+                        account:account,
+                        password:password,
+                        type:type,
+                        userclass:userclass
+                    },
+                    function(data){
+                        $.post(
+                                "http://127.0.0.1:8000/showuser/",
+                                {},
+                                function(data){
+                                    var data = data;
+                                    var st="";
+                                    for (var i=0;i<data.length;i++)
+                                    {
+                                        var usertype;
+                                        if(data[i].type==2){
+                                            usertype="管理员";
+                                        }else if(data[i].type==1){
+                                            usertype="老师";
+                                        }else{
+                                            usertype="学生";
+                                        }
+                                        st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                        '<td>'+data[i].account+'</td> <td>'+data[i].password+'</td>' +
+                                        '<td>'+data[i].class+'</td>'+
+                                        '<td>'+usertype+'</td>'+
+                                        '<td>'+data[i].borrow_total+'</td>'+
+                                        '<td>'+data[i].history_borrow_total+'</td>'+
+                                        '</tr>'
+                                    }
+                                    $("#new").html("");
+                                    $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                                    '<table class="table">'+
+                                    '<thead>'+
+                                    '<tr>'+
+                                    '<th>id</th>'+
+                                    '<th>用户名</th>'+
+                                    '<th>账号</th>'+
+                                    '<th>密码</th>'+
+                                    '<th>班级</th>'+
+                                    '<th>类型</th>'+
+                                    '<th>已借书数量</th>'+
+                                    '<th>历史书数量</th>'+
+                                    '</tr>'+
+                                    '</thead>'+
+                                    '<tbody>'+st+'</tbody> </table> </div>');
+                                },'json'
+                        )
+
+                    },
+                    'json'
+            )
+        }
+        function addclass(){
+            var classname = document.getElementById('addclassName').value;
+            var startyear = document.getElementById('addclassstartyear').value;
+            var startmonth = document.getElementById('addclassstartmonth').value;
+            var endyear = document.getElementById('addclassendyear').value;
+            var endmonth = document.getElementById('addclassendmonth').value;
+            $.post(
+                    "http://127.0.0.1:8000/addclass/",
+                    {
+                        classname:classname,
+                        startyear:startyear,
+                        startmonth:startmonth,
+                        endyear:endyear,
+                        endmonth:endmonth
+                    },
+                    function(data){
+                        $.post(
+                                "http://127.0.0.1:8000/showclass/",
+                                {},
+                                function(data){
+                                    $("#new").html("");
+                                    var data = data;
+                                    var st="";
+                                    for (var i=0;i<data.length;i++)
+                                    {
+                                        st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                        '<td>'+data[i].startdate+'</td> <td>'+data[i].enddate+'</td></tr>'
+                                    }
+                                    $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                                    '<table class="table"><thead>'+
+                                    '<tr><th>id</th> <th>班级名</th> <th>创建时间</th> <th>截止日期</th> </tr>'+
+                                    '</thead> <tbody>'+st+'</tbody> </table> </div>');
+                                },
+                                'json'
+                        )
+                    },
+                    'json'
+            )
+        }
+        function bookupdate(){
+            var bookName = document.getElementById('updatebookname').value;
+            var author = document.getElementById('updatebookauthor').value;
+            var image = document.getElementById('updatebookimage').value;
+            var version = document.getElementById('updatebookversion').value;
+            var isbn = document.getElementById('updatebookisbn').value;
+            var typeId = document.getElementById('updatebooktype').value;
+            var pay = document.getElementById('updatebookpay').value;
+            var price = document.getElementById('updatebookprice').value;
+            var description = document.getElementById('updatebookdescription').value;
+            var address = document.getElementById('updatebookaddress').value;
+            $.post(
+                    "http://127.0.0.1:8000/bookupdate/",
+                    {
+                        bookName:bookName,
+                        author:author,
+                        image:image,
+                        version:version,
+                        isbn:isbn,
+                        typeId:typeId,
+                        address:address,
+                        pay:pay,
+                        price:price,
+                        description:description
+                    },
+                    function(data){
+                        alert("图书已上架！");
+                    },
+                    'json'
+            )
+        }
+        function borrowBookSearch(){
+            var random = document.getElementById('BorrowRandom').value;
+            isbn = document.getElementById('borrowIsbn').value;
+            $.post(
+                    "http://127.0.0.1:8000/borrowbooksearch/",
+                    {
+                        random:random,
+                        isbn:isbn
+                    },
+                    function(data){
+                        var data = data;
+                        if(data[0].type==0){
+                            borrow_id = data[1].borrow_id;
+                            $("#borrowBookImage").html('' +
+                                    '<img src="'+data[4].books_image+'" style="max-height: 200px;max-width: 100%;display: block">'+
+                            '')
+                            $("#borrowBookBook").html('' +
+                                    '<p>书名：'+data[2].book_name+'</p>'+
+                                    '<p>作者：'+data[2].book_author+'</p>'+
+                                    '<p id="search_isbn">ISBN：'+data[2].isbn+'</p>'+
+                                    '<p>简介：'+data[2].book_description+'</p>'+
+                            '')
+                            $("#borrowBookUser").html('' +
+                                    '<p>账号：'+data[3].user_account+'</p>'+
+                                    '<p>姓名：'+data[3].user_name+'</p>'+
+                            '')
+                            $("#borrowBook").modal('show');
+                        }else if(data[0].type==1){
+                            alert("通过该随机码找不到待借书单！");
+                        }else if(data[0].type==2){
+                            alert("没有为输入isbn的书或者有但是已借出或者找到的书和待借书单上的书不同！");
+                        }else if(data[0].type==3){
+                            alert("数据库异常，联系管理员！");
+                        }else{
+                            alert("借书用户不存在！");
+                        }
+                    },
+                    'json'
+            )
+        }
+        function submitBorrow(date){
+            $.post(
+                    "http://127.0.0.1:8000/submitborrow/",
+                    {
+                        borrow_id:borrow_id,
+                        type:date,
+                        isbn:isbn
+                    },
+                    function(data){
+                        var data = data;
+                        if(data.result==0){
+                            alert("书籍已借出！");
+                        }else{
+                            alert("书籍未借出！");
+                        }
+                        $("#borrowBook").modal('hide');
+                    },
+                    'json'
+            )
+        }
+        function returnBook(){
+            isbn = document.getElementById('returnIsbn').value;
+            $.post(
+                    "http://127.0.0.1:8000/returnbook/",
+                    {
+                        isbn:isbn
+                    },
+                    function(data){
+                        var data = data;
+                        if(data[0].type==0){
+                            var borrowDate = data[1].borrow_startDate;
+                            var pay = 0;
+                            var date = new Date(borrowDate);
+                            var date1 = new Date();
+                            var date3 = date1.getTime()-date.getTime();
+                            var days = parseInt(date3/(24*3600*1000));
+                            pay = days*data[0].price/10;
+                            $("#returnBookImage").html('' +
+                            '<img src="'+data[4].books_image+'" style="max-height: 200px;max-width: 100%;display: block">'+
+                            '')
+                            $("#returnBookBook").html('' +
+                            '<p>书名：'+data[2].book_name+'</p>'+
+                            '<p>作者：'+data[2].book_author+'</p>'+
+                            '<p>ISBN：'+data[2].isbn+'</p>'+
+                            '<p>简介：'+data[2].book_description+'</p>'+
+                            '')
+                            $("#returnBookUser").html('' +
+                            '<p>账号：'+data[3].user_account+'</p>'+
+                            '<p>姓名：'+data[3].user_name+'</p>'+
+                            '<p>借书时间：'+borrowDate+'</p>'+
+                            '<p>应付款：'+pay+'元</p>'+
+                            '')
+                            $("#returnBook").modal('show');
+                        }else if(data[0].type==1){
+                            alert("通过该ISBN找不到已借书单！");
+                        }else if(data[0].type==2){
+                            alert("没有为输入isbn的书或者有但是已借出或者找到的书和待借书单上的书不同！");
+                        }else if(data[0].type==3){
+                            alert("数据库异常，联系管理员！");
+                        }else{
+                            alert("借书用户不存在！");
+                        }
+                    },
+                    'json'
+            )
+        }
+        function clickMenu(date){
+            $("#shudan").remove();
+            if(date.id=="1"){
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 15%;padding-bottom: 30%;padding-left: 25%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">随机码</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="BorrowRandom" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">ISBN</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="borrowIsbn" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="borrowBookSearch()" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa">检索借书单</button>'+
+                '</div>'+
+                '</div>'+
+                '</div>');
+            }else if(date.id=="2"){
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 15%;padding-bottom: 30%;padding-left: 25%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">ISBN</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="returnIsbn" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="returnBook()" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa">检索借书单</button>'+
+                '</div>'+
+                '</div>'+
+                '</div>');
+            }else if(date.id=="3"){
+                $.post(
+                        "http://127.0.0.1:8000/showclass/",
+                        {},
+                        function(data){
+                            var data = data;
+                            var st="";
+                            for (var i=0;i<data.length;i++)
+                            {
+                                st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                '<td>'+data[i].startdate+'</td> <td>'+data[i].enddate+'</td></tr>'
+                            }
+                            $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                            '<table class="table"><thead>'+
+                            '<tr><th>id</th> <th>班级名</th> <th>创建时间</th> <th>截止日期</th> </tr>'+
+                            '</thead> <tbody>'+st+'</tbody> </table> </div>');
+                        },
+                        'json'
+                )
+            }else if(date.id=="4") {
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 25%;padding-left: 10%;padding-right: 15%">'+
+                '<form class="form-horizontal" style="padding-top: 5%;padding-bottom: 10%;padding-left: 10%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">班级名称</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="addclassName" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">创建时间</label>'+
+                '<div class="input-group" style="padding-left: 14px;padding-right: 14px">'+
+                '<input id="addclassstartyear" class="form-control" placeholder="2011">'+
+                '<div class="input-group-addon">年</div>'+
+                '<input id="addclassstartmonth"  class="form-control" placeholder="9">'+
+                '<div class="input-group-addon">月</div>'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">毕业时间</label>'+
+                '<div class="input-group" style="padding-left: 14px;padding-right: 14px">'+
+                '<input id="addclassendyear" class="form-control" placeholder="2015">'+
+                '<div class="input-group-addon">年</div>'+
+                '<input id="addclassendmonth" class="form-control" placeholder="7">'+
+                '<div class="input-group-addon">月</div>'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="addclass()" class="btn btn-default">提交</button>'+
+                '</div>'+
+                '</div>'+
+                '</form>'+
+                '</div>');
+            }else if(date.id=="5") {
+                $.post(
+                        "http://127.0.0.1:8000/showuser/",
+                        {},
+                        function(data){
+                            var data = data;
+                            var st="";
+                            for (var i=0;i<data.length;i++)
+                            {
+                                var usertype;
+                                if(data[i].type==2){
+                                    usertype="管理员";
+                                }else if(data[i].type==1){
+                                    usertype="老师";
+                                }else{
+                                    usertype="学生";
+                                }
+                                st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                '<td>'+data[i].account+'</td> <td>'+data[i].password+'</td>' +
+                                '<td>'+data[i].class+'</td>'+
+                                '<td>'+usertype+'</td>'+
+                                '<td>'+data[i].borrow_total+'</td>'+
+                                '<td>'+data[i].history_borrow_total+'</td>'+
+                                '</tr>'
+                            }
+                            $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                            '<table class="table">'+
+                            '<thead>'+
+                            '<tr>'+
+                            '<th>id</th>'+
+                            '<th>用户名</th>'+
+                            '<th>账号</th>'+
+                            '<th>密码</th>'+
+                            '<th>班级</th>'+
+                            '<th>类型</th>'+
+                            '<th>已借书数量</th>'+
+                            '<th>历史书数量</th>'+
+                            '</tr>'+
+                            '</thead>'+
+                            '<tbody>'+st+'</tbody> </table> </div>');
+                        },
+                        'json'
+                )
+            }else if(date.id=="6") {
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 10%;padding-left: 10%;padding-right: 15%">'+
+                '<form class="form-horizontal" style="padding-top: 5%;padding-bottom: 10%;padding-left: 10%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">姓名</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="addusername" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">账号</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="adduseraccount" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">初始密码</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="adduserpassword" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">用户类型</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="addusertype" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">所属班级</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="adduserclass" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="adduser()" class="btn btn-default">提交</button>'+
+                '</div>'+
+                '</div>'+
+                '</form>'+
+                '</div>');
+            }else if(date.id=="7") {
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 15%;padding-bottom: 30%;padding-left: 25%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">ISBN</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="downBookIsbn" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="downBook()" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa">检索图书</button>'+
+                '</div>'+
+                '</div>'+
+                '</div>');
+            }else if(date.id=="8") {
+                $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 5%;padding-left: 10%;padding-right: 15%">'+
+                '<form class="form-horizontal" style="padding-top: 5%;padding-bottom: 5%;padding-left: 10%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">书名</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookname" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">作者</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookauthor" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">封面地址</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookimage" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">版本</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookversion" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">ISBN</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookisbn" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">类别</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebooktype" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">书价</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookprice" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">位置</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookaddress" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">付款类别</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookpay" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">描述</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="updatebookdescription" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" class="btn btn-default" onclick="bookupdate()">提交</button>'+
+                '</div>'+
+                '</div>'+
+                '</form>'+
+                '</div>');
+            }else if(date.id=="9") {
+                $.post(
+                        "http://127.0.0.1:8000/showpay/",
+                        {},
+                        function(data){
+                            var data = data;
+                            var st="";
+                            for (var i=0;i<data.length;i++)
+                            {
+                                st = st+'<tr><td>'+data[i].id+'</td><td>'+data[i].name+'</td>'+
+                                '<td>'+data[i].duration+'</td> <td>'+data[i].update+'</td>'+
+                                '</tr>'
+                            }
+                            $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 32%;padding-left: 10%;padding-right: 15%">'+
+                            '<table class="table">'+
+                            '<thead>'+
+                            '<tr>'+
+                            '<th>id</th>'+
+                            '<th>付款类型</th>'+
+                            '<th>价格：角/天</th>'+
+                            '<th>更新时间</th>'+
+                            '</tr>'+
+                            '</thead>'+
+                            '<tbody>'+st+'</tbody> </table> </div>');
+                        },
+                        'json'
+                )
+            }else if(date.id=="10") {
+                $("#new").append('    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 20%;padding-left: 10%;padding-right: 15%">'+
+                '<form class="form-horizontal" style="padding-top: 5%;padding-bottom: 15%;padding-left: 10%;padding-right: 15%">'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">付款类型</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="addpayname" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<label class="col-sm-2 control-label">价格：角/天</label>'+
+                '<div class="col-sm-10">'+
+                '<input id="addpaynumber" class="form-control">'+
+                '</div>'+
+                '</div>'+
+                '<div class="form-group">'+
+                '<div class="col-sm-offset-2 col-sm-10">'+
+                '<button type="button" onclick="addpay()" class="btn btn-default">提交</button>'+
+                '</div>'+
+                '</div>'+
+                '</form>'+
+                '</div>');
+            }
+
+        }
+    </script>
+</head>
+<body>
+
+<div class="modal fade" id="borrowBook" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="background-color: rgba(0,0, 0, 0.8)">
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" >
+        <h3 class="page-header">书籍</h3>
+        <div class="container-fluid">
+            <div class="row">
+                <div id="borrowBookImage" class="col-md-5">
+                </div>
+                <div id="borrowBookBook" class="col-md-5" style="color:#ffffff">
+                </div>
+            </div>
+        </div>
+        <h3 class="sub-header">借书人</h3>
+        <div class="container-fluid">
+            <div class="row">
+                <div id="borrowBookUser" class="col-md-5" style="color:#ffffff">
+                </div>
+                <div class="col-md-5">
+                    <button type="button" class="btn btn-lg" onclick="submitBorrow(0)" style="margin-top: 80px; background-color: rgba(8,8,8,0);color: chartreuse">借出</button>
+                    <button type="button" class="btn btn-lg" onclick="submitBorrow(1)" style="margin-top: 80px; background-color: rgba(8,8,8,0);color: dimgray">不借</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="returnBook" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="background-color: rgba(0,0, 0, 0.8)">
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" >
+        <h3 class="page-header">书籍</h3>
+        <div class="container-fluid">
+            <div class="row">
+                <div id="returnBookImage" class="col-md-5">
+                </div>
+                <div id="returnBookBook" class="col-md-5">
+                </div>
+            </div>
+        </div>
+        <h3 class="sub-header">借书人</h3>
+        <div class="container-fluid">
+            <div class="row">
+                <div id="returnBookUser" class="col-md-5">
+                </div>
+                <div class="col-md-5">
+                    <button type="button" class="btn btn-lg" onclick="submitReturn()" style="margin-top: 80px; background-color: rgba(8,8,8,0);color: chartreuse">归还</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="xiajia" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="background-color: rgba(0,0, 0, 0.8)">
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" >
+        <h3 class="page-header">书籍</h3>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-5">
+                    <img src="http://127.0.0.1:8000/views/images/books.jpg" style="max-height: 200px;max-width: 100%;display: block">
+                </div>
+                <div class="col-md-5">
+                    <p>书名：《活在当下》</p>
+                    <p>作者：那谁</p>
+                    <p>ISBN：16546546</p>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-5">
+                    <button type="button" class="btn btn-lg" style="margin-top: 80px; background-color: rgba(8,8,8,0);color: chartreuse">下架</button>
+                    <button type="button" class="btn btn-lg" style="margin-top: 80px; background-color: rgba(8,8,8,0);color: dimgray">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <form class="form-horizontal" style="padding-bottom: 10%;padding-top:10%;padding-right: 10%;padding-left:55%; background-color: rgba(8,8,8,0.5)">
+        <div class="form-group">
+            <label class="col-sm-2 control-label" style="color:#FFFFFF">新密码</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="newPassword">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" style="color:#FFFFFF">重复新密码</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="newPasswordAgain">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="button" onclick="submitChangePassword()" class="btn btn-default">提交</button>
+            </div>
+        </div>
+    </form>
+</div>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-5">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="http://127.0.0.1:8000/home/">图书馆</a>
+                </div>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <div class="col-md-3 nav">
+                    <h4 style="color: #b92c28;padding-top: 5px">你好{{ name }}管理员!</h4>
+                </div>
+                <div class="col-md-1 nav">
+                    <a class="navbar-brand" href="http://127.0.0.1:8000/home/">注销</a>
+                </div>
+                <ul class="col-md-1 nav navbar-nav">
+                    <!--<li><a href="http://v3.bootcss.com/examples/dashboard/#">登录</a></li>-->
+                    <li>
+                        <button type="button" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa" data-toggle="modal" data-target="#myModal">
+                            设置
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</nav>
+<div class="container-fluid" style="background:url(http://127.0.0.1:8000/views/images/beijing.jpg) 0 0 repeat">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar" style="background-color:rgba(8,8,8,0.5)">
+            <ul class="nav nav-sidebar">
+                <li><a id="1" onclick="clickMenu(this)" style="color:#FFFFFF">借书管理</a></li>
+                <li><a id="2" onclick="clickMenu(this)" style="color:#FFFFFF">还书管理</a></li>
+                <li>
+                    <div class="btn-group" role="group">
+                    <button type="button" style="background-color:rgba(8,8,8,0);color:#FFFFFF" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        用户管理
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a id="3" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >查看班级</a></li>
+                        <li><a id="4" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >添加班级</a></li>
+                        <li><a id="5" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >查看用户</a></li>
+                        <li><a id="6" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >添加用户</a></li>
+                    </ul>
+                </div></li>
+                <li>
+                    <div class="btn-group" role="group">
+                        <button type="button" style="background-color:rgba(8,8,8,0);color:#FFFFFF" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            图书管理
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a id="7" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >图书下架</a></li>
+                            <li><a id="8" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >图书上架</a></li>
+                            <li><a id="9" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >查看付款类别</a></li>
+                            <li><a id="10" onclick="clickMenu(this)" style="background-color:rgba(8,8,8,0);color:#080808" >添加付款类别</a></li>
+                        </ul>
+                    </div></li>
+            </ul>
+    </div>
+    </div>
+    <div id="new">
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 15%;padding-bottom: 30%;padding-left: 25%;padding-right: 15%">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">随机码</label>
+                <div class="col-sm-10">
+                    <input id="BorrowRandom" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">ISBN</label>
+                <div class="col-sm-10">
+                    <input id="borrowIsbn" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="button" onclick="borrowBookSearch()" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa">检索借书单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/jquery.min.js"></script>
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/bootstrap.js"></script>
+<!-- Just to make our placeholder images work. Don't actually copy the next line! -->
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/holder.js"></script>
+</body></html>

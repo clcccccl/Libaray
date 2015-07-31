@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<!-- saved from url=(0041)http://v3.bootcss.com/examples/dashboard/ -->
+<html lang="zh-CN">
+    <title>图书馆</title>
+    <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="http://127.0.0.1:8000/views/tools/bootstrap/css/dashboard.css" rel="stylesheet">
+    <script>
+        var id={{ id }};
+        var account = "{{ account }}"
+        var name = "{{ name}}"
+        function submitChangePassword(){
+            var newPassword = document.getElementById('newPassword').value;
+            var newPasswordAaain = document.getElementById('newPasswordAgain').value;
+            if(newPassword == newPasswordAaain){
+                $.post(
+                        "http://127.0.0.1:8000/changepassword/",
+                        {
+                            user_id: id,
+                            new_password:newPassword
+                        },
+                        function(data){
+                            var data = data;
+                            if(data.type==0){
+                                alert("密码修改成功！");
+                            }else{
+                                alert("用户不存在或者数据异常，密码修改失败！");
+                            }
+                        },
+                        'json'
+                )
+            }else{
+                alert("两次输入不一致！");
+            }
+        }
+        function getBorrow(borrowType){
+            $.post(
+                    "http://127.0.0.1:8000/getborrow/",
+                    {
+                        borrow_type:borrowType,
+                        user_id:id
+                    },
+                    function(data){
+                        var borrowDate = "";
+                        var returnDate = "";
+                        var data = data;
+                        var borrowState = "";
+                        var st="";
+                        for (var i=0;i<data.length;i++)
+                        {
+                            returnDate = data[i].return_date;
+                            borrowDate = data[i].borrow_date;
+                            borrowState = ""
+                            if(borrowType==1){
+                                returnDate = "未还";
+                                borrowState = "已借未还"
+                            }
+                            if(borrowType==2){
+                                borrowState = "已还"
+                            }
+                            if(borrowType==3){
+                                borrowDate = "未借"
+                                returnDate = "未借"
+                                borrowState = "待提交"
+                            }
+                            st = st+'<tr><td>'+data[i].borrow_id+'</td><td>'+data[i].book_name+'</td>'+
+                            '<td>'+borrowDate+'</td> <td>'+returnDate+'</td><td>'+borrowState+'</td></tr>'
+                        }
+                        $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                        '<table class="table"><thead>'+
+                        '<tr><th>借书单id</th> <th>书名</th> <th>借书时间</th> <th>还书时间</th><th>状态</th> </tr>'+
+                        '</thead> <tbody>'+st+'</tbody> </table> </div>');
+                    },
+                    'json'
+            )
+        }
+        function clickMenu(date){
+            $("#shudan").remove();
+            if(date.id=="1"){
+                getBorrow(1);
+            }else if(date.id=="2"){
+                getBorrow(2);
+            }else if(date.id=="3"){
+                getBorrow(3);
+            }else{
+                $.post(
+                        "http://127.0.0.1:8000/getstudents/",
+                        {
+                            user_id:id
+                        },
+                        function(data){
+                            var data = data;
+                            var st="";
+                            var className = data[0].class_name;
+                            for (var i=1;i<data.length;i++)
+                            {
+                                st = st+'<tr><td>'+data[i].student_id+'</td><td>'+data[i].student_name+'</td>'+
+                                '<td>'+data[i].student_borrow+'</td><td>'+data[i].student_borrow_history+'</td></tr>'
+                            }
+                            $("#new").append('<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="shudan" style="padding-top: 5%;padding-bottom: 30%;padding-left: 10%;padding-right: 15%">'+
+                            '<h4>'+className+'</h4>'+
+                            '<table class="table"><thead>'+
+                            '<tr><th>学生id</th> <th>姓名</th> <th>已借书数量</th> <th>历史借书数量</th></tr>'+
+                            '</thead> <tbody>'+st+'</tbody> </table> </div>');
+                        },
+                        'json'
+                )
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <form class="form-horizontal" style="padding-bottom: 10%;padding-top:10%;padding-right: 10%;padding-left:55%; background-color: rgba(8,8,8,0.5)">
+        <div class="form-group">
+            <label class="col-sm-2 control-label" style="color: #ffffff">新密码</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="newPassword">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" style="color: #ffffff">重复新密码</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="newPasswordAgain">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="button" onclick="submitChangePassword()" class="btn btn-default">提交</button>
+            </div>
+        </div>
+    </form>
+</div>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-5">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="http://127.0.0.1:8000/home/">图书馆</a>
+                </div>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <div class="col-md-3 nav">
+                    <h4 style="color: #b92c28;padding-top: 5px"> {{ name }}老师你好!</h4>
+                </div>
+                <div class="col-md-1 nav">
+                    <a class="navbar-brand" href="http://127.0.0.1:8000/home/">注销</a>
+                </div>
+                <ul class="col-md-1 nav navbar-nav">
+                    <li>
+                        <button type="button" class="btn btn-lg" style="background-color: rgba(8,8,8,0);color: #aaaaaa" data-toggle="modal" data-target="#myModal">
+                            设置
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</nav>
+<div class="container-fluid" style="background:url(http://127.0.0.1:8000/views/images/beijing.jpg) 0 0 repeat">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar" style="background-color:rgba(8,8,8,0.5)">
+            <ul class="nav nav-sidebar">
+                <li><a id="1" onclick="clickMenu(this)" style="color:#FFFFFF">未还的书</a></li>
+                <li><a id="2" onclick="clickMenu(this)" style="color:#FFFFFF">借书历史</a></li>
+                <li><a id="3" onclick="clickMenu(this)" style="color:#FFFFFF">待借的书</a></li>
+                <li><a id="4" onclick="clickMenu(this)" style="color:#FFFFFF">班级管理</a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="new">
+
+    </div>
+</div>
+
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/jquery.min.js"></script>
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/bootstrap.js"></script>
+<script src="http://127.0.0.1:8000/views/tools/bootstrap/js/holder.js"></script>
+<script>
+    getBorrow(1);
+</script>
+</body></html>
